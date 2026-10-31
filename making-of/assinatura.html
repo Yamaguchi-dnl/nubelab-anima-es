@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../assets/img/favicon.svg">
+<title>Nube Lab — assinatura Nubinho</title>
+<!--
+  Assinatura animada só com o Nubinho (vídeo separado do making of).
+  Abrir: http://localhost:5510/making-of/assinatura.html
+  Render: na pasta vinheta-podcast/render,
+    node render.mjs --name assinatura --url http://localhost:5510/making-of/assinatura.html
+-->
+<style>
+  :root { --roxo: #4e24f1; --roxo-deep: #3517b8; --lilas: #e698fd; --ink: #1a1a1a; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #0d0d0d; overflow: hidden; }
+  body { display: grid; place-items: center; }
+  .stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; flex: none; background: var(--roxo); transform-origin: 50% 50%; }
+
+  .shadow { position: absolute; left: 50%; top: 732px; width: 380px; height: 44px; margin-left: -190px; border-radius: 50%; background: var(--roxo-deep); }
+  .ring { position: absolute; left: 50%; top: 520px; width: 700px; height: 700px; margin: -350px 0 0 -350px; border-radius: 50%; border: 26px solid var(--lilas); }
+  .nubinho { position: absolute; left: 50%; top: 520px; width: 560px; margin: -234px 0 0 -280px; overflow: visible; }
+  .nube-body { fill: #fff; }
+  .nube-eye { fill: var(--ink); }
+  .nube-happy, .nube-mouth { fill: none; stroke: var(--ink); stroke-width: 8; stroke-linecap: round; opacity: 0; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="shadow" id="shadow"></div>
+  <div class="ring" id="ring"></div>
+  <!-- mesmo desenho da mascote do site (assets/js/main.js) -->
+  <svg class="nubinho" id="nube" viewBox="0 0 197.12 164.37" aria-label="Nubinho">
+    <path class="nube-body" d="M139.52 155.60C127.13 160.63 113.50 157.29 102.79 149.17C97.76 153.05 92.10 155.57 85.82 157.10C63.26 162.37 43.72 150.06 35.56 129.01C26.63 127.12 18.87 122.55 13.14 115.71C2.03 102.43 2.00 83.48 12.97 70.07C18.24 63.64 25.40 59.19 33.73 57.03C30.07 42.35 35.75 27.43 50.40 22.21C58.59 19.22 67.19 20.00 75.11 23.77C76.84 18.13 79.88 13.64 84.25 10.27C94.95 2.00 110.03 4.24 117.99 15.18C121.14 19.50 122.67 24.54 123.24 30.07C132.80 23.01 145.60 22.50 155.20 29.21C165.62 36.48 169.47 49.97 165.11 61.61C177.02 64.48 186.62 72.51 190.85 83.56C195.12 94.68 192.55 106.49 183.79 114.55C176.44 121.43 166.45 124.38 156.13 123.35C157.57 137.30 152.83 150.12 139.52 155.60Z"/>
+    <g class="nube-eyes">
+      <g class="nube-eye"><path d="M74.11 107.12C89.41 98.30 90.64 66.93 76.03 55.15C71.24 51.28 64.89 51.19 59.92 54.89C56.17 57.68 53.58 61.57 51.91 66.06C48.24 75.95 48.41 86.85 52.56 96.56C56.44 105.62 65.33 112.17 74.11 107.12Z"/></g>
+      <g class="nube-eye"><path d="M138.16 105.79C141.92 102.75 144.45 98.79 145.99 94.28C150.28 81.69 148.79 64.80 138.82 55.83C133.81 51.33 126.97 50.91 121.61 55.11C108.28 65.54 107.68 94.55 121.36 105.70C126.33 109.76 132.98 109.97 138.16 105.79Z"/></g>
+    </g>
+    <path class="nube-happy" d="M50 90 q19 -26 38 0 M110 90 q19 -26 38 0"/>
+    <path class="nube-mouth" d="M86 130 q13 11 26 0"/>
+  </svg>
+</div>
+
+<script src="../assets/js/vendor/gsap.min.js"></script>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const W = 1920, H = 1080;
+  const stage = document.getElementById("stage");
+  const fit = () => { const k = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = k < 1 ? `scale(${k})` : ""; };
+  fit(); addEventListener("resize", fit);
+
+  const nube = document.getElementById("nube");
+  const eyes = nube.querySelectorAll(".nube-eye");
+  const joy = nube.querySelectorAll(".nube-happy, .nube-mouth");
+
+  /* ---------- linha do tempo (3,8 s) ---------- */
+  const tl = gsap.timeline({ paused: true });
+  gsap.set(nube, { y: -900, rotation: -20, transformOrigin: "50% 100%" });
+  gsap.set("#shadow", { scale: 0.2, autoAlpha: 0 });
+  gsap.set("#ring", { scale: 0.2, autoAlpha: 0 });
+
+  // cai, com a sombra crescendo embaixo
+  tl.to(nube, { y: 0, rotation: 8, duration: 0.45, ease: "power2.in" }, 0.1)
+    .to("#shadow", { scale: 1, autoAlpha: 1, duration: 0.45, ease: "power2.in" }, 0.1)
+    // pousa: achata, estica, assenta (o "hop" do site) e solta um anel lilás
+    .to(nube, { keyframes: [
+      { scaleX: 1.22, scaleY: 0.78, rotation: 0, duration: 0.09, ease: "power2.out" },
+      { scaleX: 0.92, scaleY: 1.1, y: -50, duration: 0.2, ease: "power2.out" },
+      { scaleX: 1.05, scaleY: 0.95, y: 0, duration: 0.18, ease: "power2.in" },
+      { scaleX: 1, scaleY: 1, duration: 0.3, ease: "elastic.out(1, .5)" },
+    ] }, 0.55)
+    .to("#shadow", { keyframes: [
+      { scaleX: 1.2, duration: 0.09 }, { scaleX: 0.8, autoAlpha: 0.7, duration: 0.2 }, { scaleX: 1, autoAlpha: 1, duration: 0.18 },
+    ] }, 0.55)
+    .fromTo("#ring", { scale: 0.3, autoAlpha: 1 }, { scale: 1.5, autoAlpha: 0, duration: 0.7, ease: "expo.out", immediateRender: false }, 0.56)
+    // pisca e olha para um lado e para o outro
+    .to(eyes, { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "none", yoyo: true, repeat: 1 }, 1.45)
+    .to(eyes, { x: 10, duration: 0.25, ease: "power2.out" }, 1.75)
+    .to(eyes, { x: -10, duration: 0.3, ease: "power2.inOut" }, 2.1)
+    .to(eyes, { x: 0, duration: 0.25, ease: "power2.inOut" }, 2.45)
+    // fecha os olhos sorrindo e dá um pulinho feliz
+    .set(eyes, { opacity: 0 }, 2.75)
+    .set(joy, { opacity: 1 }, 2.75)
+    .to(nube, { keyframes: [
+      { scaleX: 1.08, scaleY: 0.92, duration: 0.1 },
+      { scaleX: 0.96, scaleY: 1.05, y: -30, duration: 0.18 },
+      { scaleX: 1, scaleY: 1, y: 0, duration: 0.35, ease: "elastic.out(1, .5)" },
+    ], ease: "power2.out" }, 2.75)
+    .to("#shadow", { keyframes: [{ scaleX: 0.85, duration: 0.18 }, { scaleX: 1, duration: 0.3 }] }, 2.85);
+
+  tl.to({}, { duration: 0.01 }, 3.8);   // segura o quadro final
+
+  window.__duration = tl.duration();
+  window.__seek = (t) => { tl.seek(t, false); return true; };
+  window.__ready = true;
+  if (!params.has("render")) { tl.play(); document.addEventListener("click", () => tl.restart()); }
+})();
+</script>
+</body>
+</html>

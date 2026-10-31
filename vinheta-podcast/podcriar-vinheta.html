@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="../assets/img/favicon.svg">
+<title>PodCriar — vinheta</title>
+<!--
+  Vinheta de abertura do PodCriar, com a linguagem de movimento do site (assets/js/motion.js).
+  Abrir: http://localhost:5510/vinheta-podcast/podcriar-vinheta.html  (vertical: ?v=9x16)
+  A linha do tempo é determinística: o render.mjs chama window.__seek(t) quadro a quadro.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=block">
+<style>
+  @font-face { font-family: "Sugo"; src: url("../assets/fonts/sugo.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+  :root {
+    --roxo: #4e24f1; --limao: #d2d641; --lilas: #e698fd; --laranja: #ff5b00;
+    --ink: #1a1a1a; --paper: #f2f2f2;
+    --f-display: "Sugo", "Dosis", "Arial Narrow", sans-serif;
+    --f-body: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #0d0d0d; overflow: hidden; }
+  body { display: grid; place-items: center; }
+
+  /* palco com tamanho fixo de vídeo; --u = 1px num quadro de 1080 de lado menor */
+  .stage {
+    --w: 1920px; --h: 1080px; --u: 1px;
+    position: relative; width: var(--w); height: var(--h); overflow: hidden;
+    background: var(--ink); color: var(--paper); font-family: var(--f-body);
+    transform-origin: 50% 50%; flex: none;
+  }
+  .stage.v { --w: 1080px; --h: 1920px; }
+  .u { position: absolute; }
+
+  /* ---------- cena 2: estúdio (fica por baixo da abertura) ---------- */
+  .studio { position: absolute; inset: 0; background: var(--ink); display: grid; place-items: center; }
+  .bigword {
+    position: absolute; left: 50%; top: 50%; translate: -50% -54%;
+    font-family: var(--f-display); font-weight: 900; line-height: .8; white-space: nowrap;
+    font-size: calc(var(--u) * 560); color: var(--paper); opacity: .07; letter-spacing: -.01em;
+  }
+  .v .bigword { font-size: calc(var(--u) * 420); }
+  .fan { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: calc(var(--u) * 360); height: calc(var(--u) * 480); }
+  .v .fan { width: calc(var(--u) * 440); height: calc(var(--u) * 590); }
+  .card {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    border-radius: calc(var(--u) * 22); overflow: hidden;
+    display: grid; place-items: center; box-shadow: 0 calc(var(--u) * 30) calc(var(--u) * 60) rgba(0,0,0,.35);
+  }
+  .card--l { background: var(--lilas); color: var(--ink); }
+  .card--r { background: var(--limao); color: var(--ink); }
+  .card--c { background: var(--roxo); z-index: 2; left: 50%; top: 50%; }
+  .card .label {
+    position: absolute; left: calc(var(--u) * 26); bottom: calc(var(--u) * 24);
+    font-weight: 700; font-size: calc(var(--u) * 18); letter-spacing: .14em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: .6em;
+  }
+  .card .label::before { content: ""; width: .55em; height: .55em; border-radius: 50%; background: currentColor; }
+  .card svg.icon { width: 46%; height: auto; }
+  #cardNube { width: 52%; }                 /* largura fixa: o grid do card centraliza a nuvem */
+  .card--c .nube { width: 100%; }
+
+  /* figurinhas (iguais às do hero) */
+  .sticker {
+    position: absolute; z-index: 4; display: inline-flex; align-items: center; gap: calc(var(--u) * 10); white-space: nowrap;
+    padding: calc(var(--u) * 16) calc(var(--u) * 24); border-radius: calc(var(--u) * 20);
+    background: #fff; color: var(--ink); font-weight: 700; font-size: calc(var(--u) * 26);
+    box-shadow: 0 calc(var(--u) * 14) calc(var(--u) * 34) rgba(0,0,0,.3);
+  }
+  .sticker--lime { background: var(--limao); }
+  .sticker--lilas { background: var(--lilas); }
+  .rec-dot { width: .5em; height: .5em; border-radius: 50%; background: #ff3b30; }
+
+  /* ---------- cena 3: o card do meio vira a tela do título ---------- */
+  .title-wrap { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none; }
+  .title-box { display: grid; justify-items: center; gap: calc(var(--u) * 48); translate: 0 calc(var(--u) * -40); }
+  .eyebrow {
+    font-weight: 700; font-size: calc(var(--u) * 24); letter-spacing: .16em; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: .7em; color: var(--paper);
+  }
+  .eyebrow::before { content: ""; width: .55em; height: .55em; border-radius: 50%; background: var(--limao); }
+  .title {
+    position: relative; display: flex; font-family: var(--f-display); font-weight: 900; line-height: .95;
+    font-size: calc(var(--u) * 300); letter-spacing: .005em; color: var(--paper);
+  }
+  .v .title { font-size: calc(var(--u) * 230); }
+  .title .m { display: inline-block; overflow: hidden; padding-top: .25em; margin-top: -.25em; padding-bottom: .1em; margin-bottom: -.1em; }
+  .title .m > span { display: inline-block; }
+  .title .hi { color: var(--limao); }
+  .title-nube { position: absolute; width: calc(var(--u) * 150); right: calc(var(--u) * -40); top: calc(var(--u) * -95); z-index: 2; }
+  .v .title-nube { width: calc(var(--u) * 110); right: calc(var(--u) * -10); top: calc(var(--u) * -70); }
+
+  /* faixa limão (marquee do site) */
+  .marquee {
+    position: absolute; left: 0; right: 0; bottom: calc(var(--u) * 70); z-index: 6;
+    background: var(--limao); color: var(--ink); border-block: calc(var(--u) * 3) solid var(--ink);
+    padding-block: calc(var(--u) * 22); overflow: hidden; rotate: -2deg; width: 110%; margin-left: -5%;
+  }
+  .v .marquee { bottom: calc(var(--u) * 240); }
+  .marquee-track { display: flex; width: max-content; }
+  .marquee-item {
+    display: inline-flex; align-items: center; gap: calc(var(--u) * 34); padding-right: calc(var(--u) * 34);
+    font-family: var(--f-display); font-weight: 800; font-size: calc(var(--u) * 54); white-space: nowrap;
+  }
+  .marquee-item .nube { width: 1.4em; --nube-fill: var(--ink); --nube-eye: var(--limao); }
+
+  /* ---------- cena 1: abertura (igual à do site) ---------- */
+  .intro { position: absolute; inset: 0; z-index: 10; background: var(--roxo); display: grid; place-items: center; overflow: hidden; }
+  .intro-text { display: grid; justify-items: center; text-align: center; margin-top: calc(var(--h) * -.1); position: relative; z-index: 2; }
+  .intro-line {
+    overflow: hidden; margin: -.25em 0 0; padding-top: .25em; padding-bottom: .06em;
+    font-family: var(--f-display); font-weight: 900; line-height: .95; white-space: nowrap;
+    font-size: calc(var(--u) * 170);
+  }
+  .v .intro-line { font-size: calc(var(--u) * 150); }
+  .intro-line span { display: inline-block; transform-origin: 0% 100%; }
+  .intro-line--hi { color: var(--limao); }
+  .intro-nube { position: absolute; left: 50%; bottom: 9%; width: calc(var(--u) * 180); translate: -50% 0; z-index: 2; }
+  .intro-wall { position: absolute; left: -12%; right: -12%; top: calc(100% + var(--vmax) * 18); height: 150%; z-index: 3; }
+  .intro-wall--back { background: var(--lilas); --puff: var(--lilas); }
+  .intro-wall--front { background: var(--paper); --puff: var(--paper); }
+  .puff { position: absolute; top: 0; left: var(--px); width: calc(var(--u) * var(--ps)); aspect-ratio: 1; border-radius: 50%; background: var(--puff); transform: translate(-50%, -50%); }
+  .puff--b { top: auto; bottom: 0; transform: translate(-50%, 50%); }
+
+  /* ---------- mascote (mesmo SVG do main.js) ---------- */
+  .nube { display: block; overflow: visible; }
+  .nube-body { fill: var(--nube-fill, #fff); }
+  .nube-eye { fill: var(--nube-eye, #1a1a1a); }
+  .nube-happy, .nube-mouth { fill: none; stroke: var(--nube-eye, #1a1a1a); stroke-width: 8; stroke-linecap: round; opacity: 0; }
+  .is-plain .nube-happy, .is-plain .nube-mouth { display: none; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- cena 2 e 3 -->
+  <div class="studio">
+    <div class="bigword">criar</div>
+    <div class="fan" id="fan">
+      <div class="card card--l" id="cardL">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="#1a1a1a"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21.5M8.5 21.5h7"/></svg>
+        <span class="label">conversa</span>
+      </div>
+      <div class="card card--r" id="cardR">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2.5" y="13.5" width="5" height="7" rx="2" fill="#1a1a1a"/><rect x="16.5" y="13.5" width="5" height="7" rx="2" fill="#1a1a1a"/></svg>
+        <span class="label">bastidor</span>
+      </div>
+      <div class="card card--c" id="cardC">
+        <div data-nube id="cardNube"></div>
+      </div>
+    </div>
+    <span class="sticker" id="st1" style="left:30%;top:24%"><i class="rec-dot"></i>gravando</span>
+    <span class="sticker sticker--lime" id="st2" style="left:64%;top:66%">ep. 01</span>
+    <span class="sticker sticker--lilas" id="st3" style="left:28%;top:74%">bastidor real</span>
+  </div>
+
+  <div class="title-wrap">
+    <div class="title-box">
+      <p class="eyebrow" id="eyebrow">um podcast nube lab criativo</p>
+      <h1 class="title" id="title" aria-label="podcriar"></h1>
+    </div>
+  </div>
+
+  <div class="marquee" id="marquee"><div class="marquee-track" id="track"></div></div>
+
+  <!-- cena 1 -->
+  <div class="intro" id="intro">
+    <div class="intro-text" id="introText">
+      <p class="intro-line"><span>bastidor real,</span></p>
+      <p class="intro-line intro-line--hi"><span>no ar.</span></p>
+    </div>
+    <div class="intro-nube" id="introNube" data-nube></div>
+    <div class="intro-wall intro-wall--back" id="wallBack"></div>
+    <div class="intro-wall intro-wall--front" id="wallFront"></div>
+  </div>
+</div>
+
+<script src="../assets/js/vendor/gsap.min.js"></script>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const vertical = params.get("v") === "9x16";
+  const stage = document.getElementById("stage");
+  if (vertical) stage.classList.add("v");
+  const W = vertical ? 1080 : 1920, H = vertical ? 1920 : 1080;
+  const $ = (s) => document.querySelector(s);
+
+  // prévia: encaixa o palco na janela (no render a janela tem o tamanho exato)
+  const fit = () => { const k = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = k < 1 ? `scale(${k})` : ""; };
+  fit(); addEventListener("resize", fit);
+
+  /* mascote: mesmo desenho do assets/js/main.js */
+  const NUBE = `<svg class="nube" viewBox="0 0 197.12 164.37">
+  <path class="nube-body" d="M139.52 155.60C127.13 160.63 113.50 157.29 102.79 149.17C97.76 153.05 92.10 155.57 85.82 157.10C63.26 162.37 43.72 150.06 35.56 129.01C26.63 127.12 18.87 122.55 13.14 115.71C2.03 102.43 2.00 83.48 12.97 70.07C18.24 63.64 25.40 59.19 33.73 57.03C30.07 42.35 35.75 27.43 50.40 22.21C58.59 19.22 67.19 20.00 75.11 23.77C76.84 18.13 79.88 13.64 84.25 10.27C94.95 2.00 110.03 4.24 117.99 15.18C121.14 19.50 122.67 24.54 123.24 30.07C132.80 23.01 145.60 22.50 155.20 29.21C165.62 36.48 169.47 49.97 165.11 61.61C177.02 64.48 186.62 72.51 190.85 83.56C195.12 94.68 192.55 106.49 183.79 114.55C176.44 121.43 166.45 124.38 156.13 123.35C157.57 137.30 152.83 150.12 139.52 155.60Z"/>
+  <g class="nube-eyes">
+    <g class="nube-eye"><path d="M74.11 107.12C89.41 98.30 90.64 66.93 76.03 55.15C71.24 51.28 64.89 51.19 59.92 54.89C56.17 57.68 53.58 61.57 51.91 66.06C48.24 75.95 48.41 86.85 52.56 96.56C56.44 105.62 65.33 112.17 74.11 107.12Z"/></g>
+    <g class="nube-eye"><path d="M138.16 105.79C141.92 102.75 144.45 98.79 145.99 94.28C150.28 81.69 148.79 64.80 138.82 55.83C133.81 51.33 126.97 50.91 121.61 55.11C108.28 65.54 107.68 94.55 121.36 105.70C126.33 109.76 132.98 109.97 138.16 105.79Z"/></g>
+    <path class="nube-happy" d="M50 90 q19 -26 38 0 M110 90 q19 -26 38 0"/>
+  </g>
+  <path class="nube-mouth" d="M86 130 q13 11 26 0"/>
+</svg>`;
+  document.querySelectorAll("[data-nube]").forEach((el) => el.insertAdjacentHTML("afterbegin", NUBE));
+
+  /* paredes de nuvem com gomos em cima e embaixo (tamanhos fixos, como no index.html) */
+  const sizes = { back: [27, 33, 32, 26, 29, 33, 31, 34, 33, 25, 33, 24, 31], front: [31, 33, 29, 28, 26, 26, 34, 24, 29, 32, 31, 33, 25] };
+  const vmax = Math.max(W, H) / 100;
+  stage.style.setProperty("--vmax", vmax + "px");
+  [["wallBack", sizes.back], ["wallFront", sizes.front]].forEach(([id, s]) => {
+    const wall = document.getElementById(id);
+    s.forEach((ps, i) => {
+      const b = i >= 7, px = b ? (i - 7) * 16.67 + 8.33 : i * 16.67;
+      wall.insertAdjacentHTML("beforeend", `<i class="puff${b ? " puff--b" : ""}" style="--px:${px}%;--ps:${(ps * vmax) / (Math.min(W, H) / 1080)}"></i>`);
+    });
+  });
+
+  /* título letra a letra (máscara por letra, como os títulos do site) */
+  const title = $("#title");
+  [..."podcriar"].forEach((ch, i) => title.insertAdjacentHTML("beforeend", `<span class="m"><span class="${i >= 3 ? "hi" : ""}">${ch}</span></span>`));
+  title.insertAdjacentHTML("beforeend", `<div class="title-nube" id="titleNube" data-nube>${NUBE}</div>`);
+
+  /* faixa */
+  const plain = NUBE.replace('class="nube"', 'class="nube is-plain"');
+  const item = `<span class="marquee-item">podcriar${plain}bastidor real${plain}nube lab criativo${plain}</span>`;
+  $("#track").innerHTML = item.repeat(6);
+
+  /* ---------- linha do tempo (7 s) ---------- */
+  const build = () => {
+    const introNube = $("#introNube .nube"), cardNube = $("#cardNube .nube"), titleNube = $("#titleNube .nube");
+    const eyes = (n) => n.querySelectorAll(".nube-eye");
+    const joy = (n) => n.querySelectorAll(".nube-happy, .nube-mouth");
+    const back = $("#wallBack"), front = $("#wallFront");
+    const gap = Math.max(W, H) / 100 * 18;   // os gomos ficam abaixo da tela até a parede subir
+    const travel = (w) => -(H + gap + w.offsetHeight + Math.max(W, H) * 0.2);
+    const cardL = $("#cardL"), cardR = $("#cardR"), cardC = $("#cardC");
+    const fanW = $("#fan").offsetWidth, fanH = $("#fan").offsetHeight;
+    const letters = title.querySelectorAll(".m > span");
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: "power4.out" } });
+
+    /* 1. abertura: frase sobe por máscara, nuvem acorda, pisca e sorri */
+    gsap.set(".intro-line span", { yPercent: 115, rotation: 3 });
+    tl.to(".intro-line span", { yPercent: 0, rotation: 0, duration: 0.75, ease: "expo.out", stagger: 0.09 }, 0.05);
+    gsap.set(introNube, { scale: 0, transformOrigin: "50% 70%" });
+    tl.to(introNube, { scale: 1, duration: 0.6, ease: "back.out(1.7)" }, 0.3)
+      .to(eyes(introNube), { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "none" }, 0.85)
+      .to(eyes(introNube), { scaleY: 1, duration: 0.08, ease: "none" }, 0.97)
+      .set(eyes(introNube), { opacity: 0 }, 1.12)
+      .set(joy(introNube), { opacity: 1 }, 1.12)
+      .to(introNube, { keyframes: [{ scaleX: 1.1, scaleY: 0.9, duration: 0.1 }, { scaleX: 0.96, scaleY: 1.05, duration: 0.12 }, { scaleX: 1, scaleY: 1, duration: 0.15 }], ease: "power2.out" }, 1.12);
+
+    /* 2. parede de nuvens (lilás na frente da clara, como no site) */
+    const T = 1.5;
+    tl.to("#introText", { y: -H * 0.14, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, T + 0.15)
+      .to("#introNube", { y: -H * 0.2, scale: 0.85, autoAlpha: 0, duration: 0.6, ease: "power2.in" }, T + 0.18)
+      .to(back, { y: () => travel(back), duration: 1.0, ease: "power3.inOut" }, T)
+      .to(front, { y: () => travel(front), duration: 1.1, ease: "power3.inOut" }, T + 0.08)
+    // instante em que a parede clara cobre a tela inteira: ali o fundo roxo some e o estúdio aparece por trás
+    const ease = gsap.parseEase("power3.inOut"), need = (H + gap) / -travel(front);
+    let lo = 0, hi = 1; for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; ease(m) < need ? (lo = m) : (hi = m); }
+    const R = T + 0.08 + hi * 1.1;
+    tl.set("#intro", { backgroundColor: "transparent" }, R);
+
+    /* 3. estúdio: "cast" gigante, leque elástico e figurinhas */
+    gsap.set(cardC, { xPercent: -50, yPercent: -50 });
+    gsap.set([cardL, cardR], { xPercent: 0, rotation: 0, scale: 0.7, autoAlpha: 0 });
+    gsap.set(cardC, { y: 120, rotation: 6, scale: 0.8, autoAlpha: 0 });
+    gsap.set(".bigword", { yPercent: 40, autoAlpha: 0 });
+    gsap.set(["#st1", "#st2", "#st3"], { xPercent: -50, yPercent: -50, scale: 0, rotation: -25 });
+    gsap.set(cardNube, { scale: 0, transformOrigin: "50% 50%" });
+    tl.to(".bigword", { yPercent: 0, autoAlpha: 0.07, duration: 1.4, ease: "expo.out" }, R)
+      .to(cardC, { y: 0, rotation: 0, scale: 1, autoAlpha: 1, duration: 1.1, ease: "expo.out" }, R + 0.05)
+      .to(cardL, { xPercent: -62, rotation: -9, scale: 0.86, autoAlpha: 1, duration: 1.3, ease: "elastic.out(1, .75)" }, R + 0.3)
+      .to(cardR, { xPercent: 62, rotation: 9, scale: 0.86, autoAlpha: 1, duration: 1.3, ease: "elastic.out(1, .75)" }, R + 0.3)
+      .to(cardNube, { scale: 1, duration: 0.6, ease: "back.out(2)" }, R + 0.45)
+      .to(eyes(cardNube), { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "none", yoyo: true, repeat: 1 }, R + 1.15)
+      .to("#st1", { scale: 1, rotation: -6, duration: 0.9, ease: "back.out(2.6)" }, R + 0.6)
+      .to("#st2", { scale: 1, rotation: 5, duration: 0.9, ease: "back.out(2.6)" }, R + 0.72)
+      .to("#st3", { scale: 1, rotation: -3, duration: 0.9, ease: "back.out(2.6)" }, R + 0.84);
+    // o ponto do "gravando" pisca como o REC do site
+    tl.to(".rec-dot", { opacity: 0, duration: 0.01, repeat: 7, yoyo: true, repeatDelay: 0.24, ease: "none" }, R + 0.9);
+
+    /* 4. cards laterais voam, o card do meio vira tela cheia (scroll do hero) */
+    const S = R + 1.7;
+    tl.to(cardL, { xPercent: vertical ? -150 : -190, rotation: -30, y: 160, autoAlpha: 0, duration: 0.7, ease: "power2.in" }, S)
+      .to(cardR, { xPercent: vertical ? 150 : 190, rotation: 30, y: 160, autoAlpha: 0, duration: 0.7, ease: "power2.in" }, S)
+      .to(["#st1", "#st2", "#st3"], { y: -220, autoAlpha: 0, duration: 0.5, stagger: 0.04, ease: "power2.in" }, S)
+      .to(".bigword", { yPercent: -70, scale: 1.3, autoAlpha: 0, duration: 0.8, ease: "power2.in" }, S)
+      .to(cardNube, { scale: 0.6, autoAlpha: 0, duration: 0.35, ease: "power2.in" }, S + 0.1)
+      .fromTo(cardC, { width: fanW, height: fanH, borderRadius: 22 }, { width: W + 4, height: H + 4, borderRadius: 0, duration: 0.85, ease: "power2.inOut" }, S + 0.1);
+
+    /* 5. título letra a letra, eyebrow e a nuvem pousando no título */
+    const N = S + 0.7;
+    gsap.set(letters, { yPercent: 115 });
+    gsap.set("#eyebrow", { autoAlpha: 0, y: 24 });
+    gsap.set(titleNube, { y: -H * 0.6, rotation: -20, transformOrigin: "50% 100%" });
+    tl.to(letters, { yPercent: 0, duration: 0.9, stagger: 0.045, ease: "expo.out" }, N)
+      .to("#eyebrow", { autoAlpha: 1, y: 0, duration: 0.8, ease: "expo.out" }, N + 0.25)
+      // queda, achata no pouso, estica e assenta (o "hop" da página de obrigado)
+      .to(titleNube, { y: 0, rotation: 8, duration: 0.42, ease: "power2.in" }, N + 0.55)
+      .to(titleNube, { keyframes: [
+        { scaleX: 1.22, scaleY: 0.78, rotation: 0, duration: 0.09, ease: "power2.out" },
+        { scaleX: 0.92, scaleY: 1.1, y: -34, duration: 0.2, ease: "power2.out" },
+        { scaleX: 1.05, scaleY: 0.95, y: 0, duration: 0.18, ease: "power2.in" },
+        { scaleX: 1, scaleY: 1, duration: 0.25, ease: "elastic.out(1, .5)" },
+      ] }, N + 0.97)
+      .to(eyes(titleNube), { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "none", yoyo: true, repeat: 1 }, N + 1.75)
+      .set(eyes(titleNube), { opacity: 0 }, N + 2.1)
+      .set(joy(titleNube), { opacity: 1 }, N + 2.1);
+
+    /* 6. faixa limão entra girando e corre */
+    gsap.set("#marquee", { y: H * 0.45, rotation: 4 });
+    tl.to("#marquee", { y: 0, rotation: -2, duration: 0.9, ease: "expo.out" }, N + 0.5);
+    tl.fromTo("#track", { x: 0 }, { x: -W * 0.9, duration: 7, ease: "none" }, 0);
+
+    /* fim: segura o quadro final */
+    tl.to({}, { duration: 0.01 }, 7);
+    return tl;
+  };
+
+  Promise.all([document.fonts.load('900 1em "Sugo"'), document.fonts.load('700 1em "Montserrat"')]).catch(() => {}).then(() => document.fonts.ready).then(() => {
+    const tl = build();
+    window.__duration = tl.duration();
+    window.__seek = (t) => { tl.seek(t, false); return true; };
+    window.__ready = true;
+    if (!params.has("render")) {
+      tl.play();
+      // prévia: clique repete
+      document.addEventListener("click", () => tl.restart());
+    }
+  });
+})();
+</script>
+</body>
+</html>

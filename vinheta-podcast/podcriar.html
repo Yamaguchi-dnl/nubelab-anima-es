@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PodCriar — logo animado</title>
+<link rel="icon" href="../assets/img/favicon.svg">
+<!--
+  Logo animado do PodCriar: a nuvem da Nube + o nome ao lado.
+  Referência de movimento: Café Olé (Behance), com os dois princípios dele:
+   1. começo ensolarado: tudo entra subindo, arranque curto e enérgico, termina numa pose feliz;
+   no fim, a nuvem cresce até cobrir a tela e deixa tudo rosa (lilás da marca);
+   2. leveza brincalhona: mola/elástico, ação secundária (olhos e ondas atrasam), letras em onda,
+      e letras soltas da linha de base (cada uma com sua altura e inclinação).
+  Abrir: http://localhost:5510/vinheta-podcast/podcriar.html  (vertical: ?v=9x16)
+  Render: node render/render.mjs --name podcriar
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=block">
+<style>
+  @font-face { font-family: "Sugo"; src: url("../assets/fonts/sugo.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+  :root { --roxo: #4e24f1; --limao: #d2d641; --lilas: #e698fd; --ink: #1a1a1a; --paper: #f2f2f2; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; background: #0d0d0d; overflow: hidden; }
+  body { display: grid; place-items: center; }
+
+  .stage {
+    --w: 1920px; --h: 1080px;
+    position: relative; width: var(--w); height: var(--h); overflow: hidden; flex: none;
+    background: var(--paper); color: var(--ink); font-family: "Montserrat", "Segoe UI", sans-serif;
+    display: grid; place-items: center;
+  }
+  .stage.v { --w: 1080px; --h: 1920px; }
+
+  /* nuvens de fundo bem apagadas, como o "céu" do site */
+  .sky { position: absolute; inset: 0; pointer-events: none; }
+  .sky .nube { position: absolute; --nube-fill: var(--lilas); opacity: .16; }
+
+  .lockup { position: relative; display: flex; align-items: center; gap: 54px; }
+  .v .lockup { flex-direction: column; gap: 40px; }
+
+  .mascot { position: relative; width: 380px; flex: none; z-index: 3; }
+  .v .mascot { width: 380px; }
+  .mascot .nube { width: 100%; --nube-fill: var(--lilas); }
+  .shadow {
+    position: absolute; left: 50%; bottom: -26px; width: 64%; height: 22px; translate: -50% 0;
+    border-radius: 50%; background: rgba(26, 26, 26, .12);
+  }
+
+  /* ondas de som saindo da nuvem (é um podcast) */
+  .waves { position: absolute; right: -14px; top: -26%; width: 84px; overflow: visible; rotate: -40deg; }
+  .v .waves { right: -40px; top: -20%; }
+  .waves path { fill: none; stroke: var(--roxo); stroke-width: 9; stroke-linecap: round; }
+
+  .word { display: grid; justify-items: start; gap: 18px; }
+  .v .word { justify-items: center; }
+  .name { display: flex; align-items: flex-end; font-family: "Sugo", "Dosis", sans-serif; font-weight: 900; font-size: 290px; line-height: .9; }
+  .v .name { font-size: 210px; }
+  .name .l { display: inline-block; transform-origin: 50% 100%; will-change: transform; }
+  .name .hi { color: var(--roxo); }
+  .name .l:nth-child(5) { margin-right: -.07em; }   /* aproxima o "r" do "i" na Sugo */
+  .tag {
+    font-weight: 700; font-size: 26px; letter-spacing: .18em; text-transform: uppercase; padding-left: 8px;
+    display: inline-flex; align-items: center; gap: .7em;
+  }
+  .tag::before { content: ""; width: .55em; height: .55em; border-radius: 50%; background: var(--lilas); }
+
+  .nube { display: block; overflow: visible; }
+  .nube-body { fill: var(--nube-fill, #fff); }
+  .nube-eye { fill: var(--ink); }
+  .nube-happy, .nube-mouth { fill: none; stroke: var(--ink); stroke-width: 8; stroke-linecap: round; opacity: 0; }
+  .sky .nube-eyes, .sky .nube-mouth { display: none; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="sky" id="sky"></div>
+  <div class="lockup">
+    <div class="mascot" id="mascot">
+      <div class="shadow" id="shadow"></div>
+      <div id="nubeWrap"></div>
+      <svg class="waves" id="waves" viewBox="0 0 60 100">
+        <path d="M8 38 q10 12 0 24"/><path d="M24 26 q18 24 0 48"/><path d="M40 14 q26 36 0 72"/>
+      </svg>
+    </div>
+    <div class="word">
+      <h1 class="name" id="name" aria-label="podcriar"></h1>
+      <p class="tag" id="tag">um podcast nube lab criativo</p>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/vendor/gsap.min.js"></script>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const vertical = params.get("v") === "9x16";
+  const stage = document.getElementById("stage");
+  if (vertical) stage.classList.add("v");
+  const W = vertical ? 1080 : 1920, H = vertical ? 1920 : 1080;
+  const $ = (s) => document.querySelector(s);
+  const fit = () => { const k = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = k < 1 ? `scale(${k})` : ""; };
+  fit(); addEventListener("resize", fit);
+
+  /* mascote: mesmo desenho do assets/js/main.js */
+  const NUBE = `<svg class="nube" viewBox="0 0 197.12 164.37">
+  <path class="nube-body" d="M139.52 155.60C127.13 160.63 113.50 157.29 102.79 149.17C97.76 153.05 92.10 155.57 85.82 157.10C63.26 162.37 43.72 150.06 35.56 129.01C26.63 127.12 18.87 122.55 13.14 115.71C2.03 102.43 2.00 83.48 12.97 70.07C18.24 63.64 25.40 59.19 33.73 57.03C30.07 42.35 35.75 27.43 50.40 22.21C58.59 19.22 67.19 20.00 75.11 23.77C76.84 18.13 79.88 13.64 84.25 10.27C94.95 2.00 110.03 4.24 117.99 15.18C121.14 19.50 122.67 24.54 123.24 30.07C132.80 23.01 145.60 22.50 155.20 29.21C165.62 36.48 169.47 49.97 165.11 61.61C177.02 64.48 186.62 72.51 190.85 83.56C195.12 94.68 192.55 106.49 183.79 114.55C176.44 121.43 166.45 124.38 156.13 123.35C157.57 137.30 152.83 150.12 139.52 155.60Z"/>
+  <g class="nube-eyes">
+    <g class="nube-eye"><path d="M74.11 107.12C89.41 98.30 90.64 66.93 76.03 55.15C71.24 51.28 64.89 51.19 59.92 54.89C56.17 57.68 53.58 61.57 51.91 66.06C48.24 75.95 48.41 86.85 52.56 96.56C56.44 105.62 65.33 112.17 74.11 107.12Z"/></g>
+    <g class="nube-eye"><path d="M138.16 105.79C141.92 102.75 144.45 98.79 145.99 94.28C150.28 81.69 148.79 64.80 138.82 55.83C133.81 51.33 126.97 50.91 121.61 55.11C108.28 65.54 107.68 94.55 121.36 105.70C126.33 109.76 132.98 109.97 138.16 105.79Z"/></g>
+    <path class="nube-happy" d="M50 90 q19 -26 38 0 M110 90 q19 -26 38 0"/>
+  </g>
+  <path class="nube-mouth" d="M86 130 q13 11 26 0"/>
+</svg>`;
+  $("#nubeWrap").innerHTML = NUBE;
+
+  /* céu: algumas nuvens apagadas */
+  const sky = vertical
+    ? [[8, 10, 220], [70, 6, 160], [80, 78, 260], [4, 84, 180], [60, 92, 120]]
+    : [[6, 12, 220], [78, 8, 170], [88, 70, 260], [14, 78, 160], [50, 90, 120]];
+  sky.forEach(([x, y, s]) => $("#sky").insertAdjacentHTML("beforeend", `<div class="nube" style="left:${x}%;top:${y}%;width:${s}px">${NUBE}</div>`));
+
+  /* nome: letras soltas da linha de base, cada uma com altura e inclinação próprias */
+  const rest = [[-8, -4], [5, 3], [-4, -2], [7, 4], [-6, -3], [4, 3], [-7, -4], [5, 2]];  // [y px, rotação°]
+  const name = $("#name");
+  [..."podcriar"].forEach((ch, i) => name.insertAdjacentHTML("beforeend", `<span class="l${i >= 3 ? " hi" : ""}">${ch}</span>`));
+  const letters = [...name.querySelectorAll(".l")];
+
+  const build = () => {
+    const nube = $("#nubeWrap .nube"), eyesG = nube.querySelector(".nube-eyes"), eyes = nube.querySelectorAll(".nube-eye");
+    const joy = nube.querySelectorAll(".nube-happy, .nube-mouth");
+    const waves = [...document.querySelectorAll("#waves path")];
+    const tl = gsap.timeline({ paused: true });
+
+    /* céu sobe devagar o tempo todo */
+    gsap.set(".sky .nube", { y: 60, opacity: 0 });
+    tl.to(".sky .nube", { y: 0, opacity: 0.16, duration: 2, stagger: 0.12, ease: "power2.out" }, 0)
+      .to(".sky .nube", { y: -40, duration: 4.5, ease: "none" }, 1.5);
+
+    /* 1. a nuvem sobe de baixo: estica na subida, achata ao chegar, assenta em mola */
+    gsap.set(nube, { y: 520, scaleX: 0.86, scaleY: 1.18, transformOrigin: "50% 100%" });
+    gsap.set("#shadow", { scaleX: 0.2, opacity: 0 });
+    gsap.set(eyesG, { y: 0 });
+    tl.to(nube, { y: -46, duration: 0.42, ease: "power3.out" }, 0.15)
+      .to(nube, { scaleX: 0.92, scaleY: 1.1, duration: 0.42, ease: "power2.out" }, 0.15)
+      .to(nube, { y: 0, scaleX: 1.14, scaleY: 0.86, duration: 0.2, ease: "power2.in" }, 0.57)
+      .to(nube, { scaleX: 1, scaleY: 1, duration: 0.9, ease: "elastic.out(1.1, .38)" }, 0.77)
+      .to("#shadow", { scaleX: 1, opacity: 1, duration: 0.5, ease: "power2.out" }, 0.45)
+      // ação secundária: os olhos atrasam na subida e passam do ponto no pouso
+      .fromTo(eyesG, { y: 22 }, { y: -10, duration: 0.42, ease: "power2.out" }, 0.15)
+      .to(eyesG, { y: 8, duration: 0.2, ease: "power2.in" }, 0.57)
+      .to(eyesG, { y: 0, duration: 0.8, ease: "elastic.out(1, .4)" }, 0.77)
+      // pisca
+      .to(eyes, { scaleY: 0.08, transformOrigin: "50% 50%", duration: 0.06, ease: "none", yoyo: true, repeat: 1 }, 1.05);
+
+    /* 2. antecipação: a nuvem respira fundo... e as letras saem dela, em onda */
+    const L = 1.3;
+    tl.to(nube, { scaleX: 1.08, scaleY: 0.92, duration: 0.18, ease: "power2.inOut" }, L - 0.18)
+      .to(nube, { scaleX: 0.96, scaleY: 1.05, duration: 0.16, ease: "power2.out" }, L)
+      .to(nube, { scaleX: 1, scaleY: 1, duration: 0.6, ease: "elastic.out(1, .45)" }, L + 0.16);
+    letters.forEach((el, i) => {
+      const [ry, rr] = rest[i];
+      gsap.set(el, { y: 180, rotation: rr * -4, scale: 0.3, opacity: 0 });
+      const t = L + 0.04 + i * 0.065;
+      tl.to(el, { opacity: 1, duration: 0.08, ease: "none" }, t)
+        .to(el, { y: ry, scale: 1, duration: 0.75, ease: "back.out(2.4)" }, t)
+        .to(el, { rotation: rr, duration: 1.1, ease: "elastic.out(1.2, .35)" }, t + 0.05);
+    });
+    // ondas de som pulsam enquanto o nome sai
+    gsap.set(waves, { opacity: 0, scale: 0.4, transformOrigin: "0% 50%" });
+    waves.forEach((w, i) => {
+      for (let k = 0; k < 3; k++) {
+        const t = L + 0.05 + i * 0.08 + k * 0.42;
+        tl.to(w, { opacity: 1, scale: 1, duration: 0.18, ease: "back.out(3)" }, t)
+          .to(w, { opacity: 0, scale: 1.15, duration: 0.24, ease: "power1.in" }, t + 0.2);
+      }
+    });
+
+    /* 3. a nuvem olha para o nome, sorri e dá um pulinho: final feliz */
+    const J = 2.6;
+    tl.to(eyesG, { x: vertical ? 0 : 9, y: vertical ? 10 : -2, duration: 0.35, ease: "power3.out" }, J - 0.6)
+      .set(eyes, { opacity: 0 }, J)
+      .set(joy, { opacity: 1 }, J)
+      .set(eyesG, { x: 0, y: 0 }, J)
+      .to(nube, { keyframes: [
+        { scaleX: 1.12, scaleY: 0.88, duration: 0.12, ease: "power2.out" },
+        { y: -70, scaleX: 0.92, scaleY: 1.1, duration: 0.26, ease: "power2.out" },
+        { y: 0, scaleX: 1, scaleY: 1, duration: 0.24, ease: "power2.in" },
+        { scaleX: 1.1, scaleY: 0.9, duration: 0.08, ease: "power2.out" },
+        { scaleX: 1, scaleY: 1, duration: 0.6, ease: "elastic.out(1, .4)" },
+      ] }, J)
+      .to("#shadow", { keyframes: [{ scaleX: 0.7, opacity: 0.6, duration: 0.38 }, { scaleX: 1, opacity: 1, duration: 0.24 }] }, J + 0.12);
+    // as letras reagem ao pouso da nuvem, em onda
+    letters.forEach((el, i) => {
+      tl.to(el, { y: rest[i][0] - 26, duration: 0.16, ease: "power2.out" }, J + 0.62 + i * 0.04)
+        .to(el, { y: rest[i][0], duration: 0.7, ease: "elastic.out(1.1, .4)" }, J + 0.78 + i * 0.04);
+    });
+
+    /* 4. assinatura */
+    gsap.set("#tag", { y: 30, opacity: 0 });
+    tl.to("#tag", { y: 0, opacity: 1, duration: 0.8, ease: "expo.out" }, J + 0.3);
+
+    /* 5. final: a nuvem toma fôlego e cresce até a tela inteira ficar rosa */
+    const B = 4.15;
+    const sr = stage.getBoundingClientRect(), k = sr.width / W, mr = $("#mascot").getBoundingClientRect();
+    const center = { x: (sr.left + sr.width / 2 - (mr.left + mr.width / 2)) / k, y: (sr.top + sr.height / 2 - (mr.top + mr.height / 2)) / k };
+    tl.to(nube, { scaleX: 1.1, scaleY: 0.88, y: 10, duration: 0.22, ease: "power2.inOut" }, B)        // antecipação
+      .to("#shadow", { scaleX: 0.3, opacity: 0, duration: 0.3, ease: "power2.in" }, B + 0.1)
+      .to(nube, { scaleX: 16, scaleY: 16, y: 0, transformOrigin: "50% 55%", smoothOrigin: true, duration: 0.85, ease: "power3.in" }, B + 0.22)
+      // enquanto cresce, a nuvem vai para o centro da tela: o rosa cobre os quatro cantos juntos
+      .to("#nubeWrap", { x: center.x, y: center.y, duration: 0.85, ease: "power2.inOut" }, B + 0.22)
+      .to(joy, { opacity: 0, duration: 0.2, ease: "none" }, B + 0.42);
+    // o nome e a assinatura são empurrados para fora pela nuvem, em onda
+    letters.forEach((el, i) => {
+      tl.to(el, vertical
+        ? { y: 380 + i * 12, rotation: rest[i][1] * 5, opacity: 0, duration: 0.6, ease: "power2.in" }
+        : { x: 260 + i * 40, y: rest[i][0] - 40 + i * 6, rotation: rest[i][1] * 5, opacity: 0, duration: 0.6, ease: "power2.in" }, B + 0.3 + i * 0.03);
+    });
+    tl.to("#tag", vertical ? { y: 260, opacity: 0, duration: 0.5, ease: "power2.in" } : { x: 300, opacity: 0, duration: 0.5, ease: "power2.in" }, B + 0.3)
+      .to(".sky .nube", { scale: 1.6, opacity: 0, duration: 0.7, ease: "power2.in" }, B + 0.3)
+      // garante o quadro todo rosa no fim (as bordas da nuvem já passaram da tela)
+      .set("#stage", { backgroundColor: "#e698fd" }, B + 1.07)
+      .set(".lockup, .sky", { visibility: "hidden" }, B + 1.07);
+    tl.to({}, { duration: 0.01 }, B + 1.7);
+    return tl;
+  };
+
+  Promise.all([document.fonts.load('900 1em "Sugo"'), document.fonts.load('700 1em "Montserrat"')]).catch(() => {}).then(() => document.fonts.ready).then(() => {
+    const tl = build();
+    window.__duration = tl.duration();
+    window.__seek = (t) => { tl.seek(t, false); return true; };
+    window.__ready = true;
+    if (!params.has("render")) { tl.play(); document.addEventListener("click", () => tl.restart()); }
+  });
+})();
+</script>
+</body>
+</html>
